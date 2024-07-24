@@ -1,10 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button, Container, Typography, Box } from '@mui/material';
-import MonacoEditor from '@monaco-editor/react';
+import MonacoEditor, { loader } from '@monaco-editor/react';
 
 function App() {
     const [fileContent, setFileContent] = useState('');
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        loader.init().then(monaco => {
+            monaco.editor.defineTheme('custom-dark', {
+                base: 'vs-dark', // can also be 'vs' or 'hc-black'
+                inherit: true, // can also be false to completely replace the base theme
+                rules: [],
+                colors: {
+                    'editor.background': '#000000', // background color
+                }
+            });
+            monaco.editor.setTheme('custom-dark');
+        });
+    }, []);
 
     const openFile = async (event) => {
         const file = event.target.files[0];
@@ -41,9 +55,8 @@ function App() {
                     height="100%"
                     language="cpp"
                     value={fileContent}
-                    defaultValue={fileContent}
                     onChange={(value) => setFileContent(value)}
-                    options={{ theme: 'vs-dark' }}
+                    theme="custom-dark"
                 />
             </Box>
         </Container>
