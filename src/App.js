@@ -9,11 +9,11 @@ function App() {
     useEffect(() => {
         loader.init().then(monaco => {
             monaco.editor.defineTheme('custom-dark', {
-                base: 'vs-dark', // can also be 'vs' or 'hc-black'
-                inherit: true, // can also be false to completely replace the base theme
+                base: 'vs-dark',
+                inherit: true,
                 rules: [],
                 colors: {
-                    'editor.background': '#000000', // background color
+                    'editor.background': '#000000',
                 }
             });
             monaco.editor.setTheme('custom-dark');
@@ -41,16 +41,21 @@ function App() {
 
     return (
         <Container>
-            <Typography variant="h4" gutterBottom>SumoIDE</Typography>
-            <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={openFile}
-            />
-            <Button variant="contained" color="primary" onClick={() => fileInputRef.current.click()}>Open File</Button>
-            <Button variant="contained" color="secondary" onClick={saveFile}>Save File</Button>
-            <Box sx={{ height: '80vh', mt: 2 }}>
+            <Box sx={{ textAlign: 'center', my: 1 }}>
+                <Typography variant="h4" gutterBottom>SumoIDE</Typography>
+            </Box>
+            <Box>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={openFile}
+                />
+                <Button variant="contained" color="primary" onClick={() => fileInputRef.current.click()} sx={{ mx: 1 }}>
+                    Open File
+                </Button>
+            </Box>
+            <Box sx={{ height: '70vh', mt: 1 }}>
                 <MonacoEditor
                     height="100%"
                     language="cpp"
@@ -58,6 +63,11 @@ function App() {
                     onChange={(value) => setFileContent(value)}
                     theme="custom-dark"
                 />
+            </Box>
+            <Box sx={{ textAlign: 'center', my: 1 }}>
+                <Button variant="contained" color="primary" onClick={saveFile} sx={{ mt: 1 }}>
+                    Save File
+                </Button>
             </Box>
         </Container>
     );
