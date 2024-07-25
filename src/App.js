@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button, Container, Typography, Box } from '@mui/material';
+import { AppBar, Toolbar, Button, Container, Typography, Box, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 
 function App() {
@@ -18,6 +19,12 @@ function App() {
             });
             monaco.editor.setTheme('custom-dark');
         });
+
+        // Fetch the default code from the file
+        fetch('/defaultCode.ino')
+            .then(response => response.text())
+            .then(data => setFileContent(data))
+            .catch(error => console.error('Error fetching default code:', error));
     }, []);
 
     const openFile = async (event) => {
@@ -40,36 +47,31 @@ function App() {
     };
 
     return (
-        <Container>
-            <Box sx={{ textAlign: 'center', my: 1 }}>
-                <Typography variant="h4" gutterBottom>SumoIDE</Typography>
+        <div>
+            <AppBar position="static">
+                <Toolbar>
+                    <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+                        <MenuIcon />
+                    </IconButton>
+                    <Button color="inherit" onClick={() => fileInputRef.current.click()}>Open File</Button>
+                    <Button color="inherit" onClick={saveFile}>Save File</Button>
+                    <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
+                        SumoIDE
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+            <Box sx={{ height: '80vh', display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Box sx={{ width: '90%' }}>
+                    <MonacoEditor
+                        height="100%"
+                        language="cpp"
+                        value={fileContent}
+                        onChange={(value) => setFileContent(value)}
+                        theme="custom-dark"
+                    />
+                </Box>
             </Box>
-            <Box>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ display: 'none' }}
-                    onChange={openFile}
-                />
-                <Button variant="contained" color="primary" onClick={() => fileInputRef.current.click()} sx={{ mx: 1 }}>
-                    Open File
-                </Button>
-            </Box>
-            <Box sx={{ height: '70vh', mt: 1 }}>
-                <MonacoEditor
-                    height="100%"
-                    language="cpp"
-                    value={fileContent}
-                    onChange={(value) => setFileContent(value)}
-                    theme="custom-dark"
-                />
-            </Box>
-            <Box sx={{ textAlign: 'center', my: 1 }}>
-                <Button variant="contained" color="primary" onClick={saveFile} sx={{ mt: 1 }}>
-                    Save File
-                </Button>
-            </Box>
-        </Container>
+        </div>
     );
 }
 
