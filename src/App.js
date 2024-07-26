@@ -124,7 +124,7 @@ function App() {
             return (
                 <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
                     <Grid item xs={12} md={6} textAlign="center">
-                        <Typography>{name}</Typography>
+                        <Typography variant="h5" display="inline" marginRight={2}>{name}</Typography>
                         <AirplaneToggle
                             checked={value === 'true'}
                             onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
