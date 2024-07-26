@@ -6,8 +6,7 @@ import debounce from 'lodash.debounce';
 
 function App() {
     const [fileContent, setFileContent] = useState('');
-    const [forwardSpeed, setForwardSpeed] = useState('');
-    const [initialSpeed, setInitialSpeed] = useState('');
+    const [globalVariables, setGlobalVariables] = useState({});
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -33,23 +32,42 @@ function App() {
             .catch(error => console.error('Error fetching default code:', error));
     }, []);
 
-    useEffect(() => {
-        updateCode();
-    }, [forwardSpeed, initialSpeed]);
+    const extractGlobalVariables = (code) => {
+        const globalSection = code.match(/\/\/ Global variables([\s\S]*?)\/\/ Function prototypes/);
+        if (globalSection) {
+            const vars = globalSection[1].split('\n').reduce((acc, line) => {
+                const match = line.match(/(const\s+)?(\w+)\s+(\w+)\s*=\s*([^;]+);/);
+                if (match) {
+                    const [, , type, name, value] = match;
+                    acc[name] = { type, value };
+                }
+                return acc;
+            }, {});
+            setGlobalVariables(vars);
+        }
+    };
 
     const updateCode = useCallback(debounce(() => {
-        const updatedCode = fileContent
-            .replace(/SEARCH_SPEED = \d+/g, `SEARCH_SPEED = ${forwardSpeed}`)
-            .replace(/FOUND_SPEED = \d+/g, `FOUND_SPEED = ${initialSpeed}`);
+        let updatedCode = fileContent;
+        for (const [name, { value }] of Object.entries(globalVariables)) {
+            const regex = new RegExp(`(${name}\\s*=\\s*)[^;]+;`, 'g');
+            updatedCode = updatedCode.replace(regex, `$1${value};`);
+        }
         setFileContent(updatedCode);
-    }, 300), [fileContent, forwardSpeed, initialSpeed]);
+    }, 300), [fileContent, globalVariables]);
 
-    const extractGlobalVariables = (code) => {
-        const searchSpeedMatch = code.match(/SEARCH_SPEED\s*=\s*(\d+)/);
-        const foundSpeedMatch = code.match(/FOUND_SPEED\s*=\s*(\d+)/);
+    useEffect(() => {
+        updateCode();
+    }, [globalVariables]);
 
-        if (searchSpeedMatch) setForwardSpeed(searchSpeedMatch[1]);
-        if (foundSpeedMatch) setInitialSpeed(foundSpeedMatch[1]);
+    const handleVariableChange = (name, value) => {
+        setGlobalVariables(prevState => ({
+            ...prevState,
+            [name]: {
+                ...prevState[name],
+                value,
+            },
+        }));
     };
 
     const openFile = async (event) => {
@@ -97,26 +115,18 @@ function App() {
             <Box sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>Control Dashboard</Typography>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            label="Search Speed"
-                            type="number"
-                            fullWidth
-                            value={forwardSpeed}
-                            onChange={(e) => setForwardSpeed(e.target.value)}
-                            variant="outlined"
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            label="Found Speed"
-                            type="number"
-                            fullWidth
-                            value={initialSpeed}
-                            onChange={(e) => setInitialSpeed(e.target.value)}
-                            variant="outlined"
-                        />
-                    </Grid>
+                    {Object.entries(globalVariables).map(([name, { value }]) => (
+                        <Grid item xs={12} md={6} key={name}>
+                            <TextField
+                                label={name}
+                                type="text"
+                                fullWidth
+                                value={value}
+                                onChange={(e) => handleVariableChange(name, e.target.value)}
+                                variant="outlined"
+                            />
+                        </Grid>
+                    ))}
                 </Grid>
             </Box>
             <Box sx={{ height: '80vh', display: 'flex', justifyContent: 'center', mt: 2 }}>
