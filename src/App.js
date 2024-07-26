@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Button, Box, Typography, IconButton, TextField, Grid } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Typography, IconButton, TextField, Grid, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 import debounce from 'lodash.debounce';
@@ -39,7 +39,7 @@ function App() {
                 const match = line.match(/(const\s+)?(\w+)\s+(\w+)\s*=\s*([^;]+);/);
                 if (match) {
                     const [, , type, name, value] = match;
-                    acc[name] = { type, value };
+                    acc[name] = { type, value: value.trim(), originalValue: value.trim() };
                 }
                 return acc;
             }, {});
@@ -49,9 +49,9 @@ function App() {
 
     const updateCode = useCallback(debounce(() => {
         let updatedCode = fileContent;
-        for (const [name, { value }] of Object.entries(globalVariables)) {
-            const regex = new RegExp(`(${name}\\s*=\\s*)[^;]+;`, 'g');
-            updatedCode = updatedCode.replace(regex, `$1${value};`);
+        for (const [name, { value, originalValue }] of Object.entries(globalVariables)) {
+            const regex = new RegExp(`(${name}\\s*=\\s*)${originalValue}`, 'g');
+            updatedCode = updatedCode.replace(regex, `$1${value}`);
         }
         setFileContent(updatedCode);
     }, 300), [fileContent, globalVariables]);
@@ -98,6 +98,59 @@ function App() {
         }
     };
 
+    const renderInputField = (name, value) => {
+        if (name.toLowerCase().includes('strategy')) {
+            return (
+                <FormControl fullWidth variant="outlined">
+                    <InputLabel>{name}</InputLabel>
+                    <Select
+                        value={value}
+                        onChange={(e) => handleVariableChange(name, e.target.value)}
+                        label={name}
+                    >
+                        <MenuItem value={0}>SearchAndDestroy</MenuItem>
+                        <MenuItem value={1}>AggressivePursuit</MenuItem>
+                        <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
+                    </Select>
+                </FormControl>
+            );
+        } else if (value === 'true' || value === 'false') {
+            return (
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={value === 'true'}
+                            onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
+                            name={name}
+                        />
+                    }
+                    label={name}
+                />
+            );
+        } else if (!isNaN(value)) {
+            return (
+                <TextField
+                    label={name}
+                    type="number"
+                    fullWidth
+                    value={value}
+                    onChange={(e) => handleVariableChange(name, e.target.value)}
+                    variant="outlined"
+                />
+            );
+        }
+        return (
+            <TextField
+                label={name}
+                type="text"
+                fullWidth
+                value={value}
+                onChange={(e) => handleVariableChange(name, e.target.value)}
+                variant="outlined"
+            />
+        );
+    };
+
     return (
         <div>
             <AppBar position="static">
@@ -117,14 +170,7 @@ function App() {
                 <Grid container spacing={2}>
                     {Object.entries(globalVariables).map(([name, { value }]) => (
                         <Grid item xs={12} md={6} key={name}>
-                            <TextField
-                                label={name}
-                                type="text"
-                                fullWidth
-                                value={value}
-                                onChange={(e) => handleVariableChange(name, e.target.value)}
-                                variant="outlined"
-                            />
+                            {renderInputField(name, value)}
                         </Grid>
                     ))}
                 </Grid>
