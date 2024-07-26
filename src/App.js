@@ -103,8 +103,8 @@ function App() {
     const renderInputField = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             return (
-                <Grid container alignItems="center" spacing={1}>
-                    <Grid item xs={12}>
+                <Grid container justifyContent="center" spacing={1} marginBottom={2}>
+                    <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
                             <InputLabel>{name}</InputLabel>
                             <Select
@@ -122,11 +122,9 @@ function App() {
             );
         } else if (value === 'true' || value === 'false') {
             return (
-                <Grid container alignItems="center" spacing={1}>
-                    <Grid item xs={6}>
+                <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
+                    <Grid item xs={12} md={6} textAlign="center">
                         <Typography>{name}</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
                         <AirplaneToggle
                             checked={value === 'true'}
                             onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
@@ -184,13 +182,24 @@ function App() {
                     </Typography>
                 </Toolbar>
             </AppBar>
-            <Box sx={{ p: 2, ml: 2 }}>
-                <Typography variant="h6" gutterBottom>Control Dashboard</Typography>
-                <Grid container spacing={1}>
+            <Box sx={{ p: 2, ml: 2 }} marginTop="50px">
+                <Typography variant="h3" textAlign="center" gutterBottom>Control Dashboard</Typography>
+                <Grid container spacing={1} justifyContent="center" marginTop="100px">
                     {Object.entries(globalVariables).map(([name, { value }]) => (
-                        <Grid item xs={12} md={6} key={name}>
-                            {renderInputField(name, value)}
-                        </Grid>
+                        (name.toLowerCase().includes('strategy') || value === 'true' || value === 'false') && (
+                            <Grid item xs={12} key={name}>
+                                {renderInputField(name, value)}
+                            </Grid>
+                        )
+                    ))}
+                </Grid>
+                <Grid container spacing={1} width="90%" textAlign="center" marginLeft="90px">
+                    {Object.entries(globalVariables).map(([name, { value }]) => (
+                        (!name.toLowerCase().includes('strategy') && value !== 'true' && value !== 'false') && (
+                            <Grid item xs={12} md={6} key={name}>
+                                {renderInputField(name, value)}
+                            </Grid>
+                        )
                     ))}
                 </Grid>
             </Box>
