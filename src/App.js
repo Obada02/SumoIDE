@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Button, Box, Typography, IconButton, TextField, Grid, Select, MenuItem, FormControl, InputLabel, Switch, FormControlLabel } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Typography, IconButton, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 import debounce from 'lodash.debounce';
+import Gauge from './Gauge';
+import AirplaneToggle from './AirplaneToggle';
 
 function App() {
     const [fileContent, setFileContent] = useState('');
@@ -101,42 +103,59 @@ function App() {
     const renderInputField = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             return (
-                <FormControl fullWidth variant="outlined">
-                    <InputLabel>{name}</InputLabel>
-                    <Select
-                        value={value}
-                        onChange={(e) => handleVariableChange(name, e.target.value)}
-                        label={name}
-                    >
-                        <MenuItem value={0}>SearchAndDestroy</MenuItem>
-                        <MenuItem value={1}>AggressivePursuit</MenuItem>
-                        <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
-                    </Select>
-                </FormControl>
+                <Grid container alignItems="center" spacing={1}>
+                    <Grid item xs={12}>
+                        <FormControl fullWidth variant="outlined">
+                            <InputLabel>{name}</InputLabel>
+                            <Select
+                                value={value}
+                                onChange={(e) => handleVariableChange(name, e.target.value)}
+                                label={name}
+                            >
+                                <MenuItem value={0}>SearchAndDestroy</MenuItem>
+                                <MenuItem value={1}>AggressivePursuit</MenuItem>
+                                <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                </Grid>
             );
         } else if (value === 'true' || value === 'false') {
             return (
-                <FormControlLabel
-                    control={
-                        <Switch
+                <Grid container alignItems="center" spacing={1}>
+                    <Grid item xs={6}>
+                        <Typography>{name}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <AirplaneToggle
                             checked={value === 'true'}
                             onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
                             name={name}
                         />
-                    }
-                    label={name}
-                />
+                    </Grid>
+                </Grid>
             );
         } else if (!isNaN(value)) {
             return (
-                <TextField
-                    label={name}
-                    type="number"
-                    fullWidth
-                    value={value}
-                    onChange={(e) => handleVariableChange(name, e.target.value)}
-                    variant="outlined"
-                />
+                <Grid container alignItems="center" spacing={1}>
+                    <Grid item xs={6}>
+                        <TextField
+                            label={name}
+                            type="number"
+                            fullWidth
+                            value={value}
+                            onChange={(e) => handleVariableChange(name, e.target.value)}
+                            variant="outlined"
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Gauge
+                            value={parseFloat(value)}
+                            max={500}
+                            label={name}
+                        />
+                    </Grid>
+                </Grid>
             );
         }
         return (
@@ -165,9 +184,9 @@ function App() {
                     </Typography>
                 </Toolbar>
             </AppBar>
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: 2, ml: 2 }}>
                 <Typography variant="h6" gutterBottom>Control Dashboard</Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing={1}>
                     {Object.entries(globalVariables).map(([name, { value }]) => (
                         <Grid item xs={12} md={6} key={name}>
                             {renderInputField(name, value)}
