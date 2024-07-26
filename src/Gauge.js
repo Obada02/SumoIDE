@@ -1,12 +1,22 @@
-// src/Gauge.js
 import React from 'react';
 
-const Gauge = ({ value, max, label }) => {
+const Gauge = ({ value, max, name }) => {
+    if (name.match(/TIME/)) {
+        max = 2000;
+    }
+
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
     const percentage = value / max;
-    const offset = circumference - percentage * circumference;
+    let offset = circumference - percentage * circumference;
 
+    console.log(name, value);
+    //if (name === 'TURN_LEFT_TIME')
+     //    offset = -offset;
+
+    if (name.match(/TIME/)) {
+        value = `${Math.floor(value / 1000)}:${value % 1000}`;
+    }
     return (
         <svg width="120" height="120" viewBox="0 0 120 120">
             <circle
@@ -22,14 +32,13 @@ const Gauge = ({ value, max, label }) => {
                 cy="60"
                 r={radius}
                 fill="transparent"
-                stroke="#00ff00"
+                stroke="#201E43"
                 strokeWidth="10"
                 strokeDasharray={circumference}
                 strokeDashoffset={offset}
                 transform="rotate(-90 60 60)"
             />
             <text x="60" y="60" textAnchor="middle" dy="7" fontSize="20">{value}</text>
-            <text x="60" y="85" textAnchor="middle" dy="7" fontSize="12">{label}</text>
         </svg>
     );
 };

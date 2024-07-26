@@ -6,6 +6,13 @@ import debounce from 'lodash.debounce';
 import Gauge from './Gauge';
 import AirplaneToggle from './AirplaneToggle';
 
+const codeEditorBackground = '#201E43';
+const menuBarBackground = '#201E43'; // Red
+const websiteBackground = '#F5F5F5'; // Very Light Gray
+const textColor = '#212121'; // Very Dark Gray
+const accentColor = '#FFEB3B'; // Yellow
+const highlightColor = '#E91E63'; // Pink
+
 function App() {
     const [fileContent, setFileContent] = useState('');
     const [globalVariables, setGlobalVariables] = useState({});
@@ -18,7 +25,7 @@ function App() {
                 inherit: true,
                 rules: [],
                 colors: {
-                    'editor.background': '#000000',
+                    'editor.background': codeEditorBackground,
                 }
             });
             monaco.editor.setTheme('custom-dark');
@@ -106,11 +113,12 @@ function App() {
                 <Grid container justifyContent="center" spacing={1} marginBottom={2}>
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth variant="outlined">
-                            <InputLabel>{name}</InputLabel>
+                            <InputLabel style={{ color: textColor }}>{name}</InputLabel>
                             <Select
                                 value={value}
                                 onChange={(e) => handleVariableChange(name, e.target.value)}
                                 label={name}
+                                style={{ color: textColor }}
                             >
                                 <MenuItem value={0}>SearchAndDestroy</MenuItem>
                                 <MenuItem value={1}>AggressivePursuit</MenuItem>
@@ -124,7 +132,7 @@ function App() {
             return (
                 <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
                     <Grid item xs={12} md={6} textAlign="center">
-                        <Typography variant="h5" display="inline" marginRight={2}>{name}</Typography>
+                        <Typography variant="h5" display="inline" marginRight={2} style={{ color: textColor }}>{name}</Typography>
                         <AirplaneToggle
                             checked={value === 'true'}
                             onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
@@ -149,8 +157,8 @@ function App() {
                     <Grid item xs={6}>
                         <Gauge
                             value={parseFloat(value)}
-                            max={500}
-                            label={name}
+                            max={250}
+                            name={name}
                         />
                     </Grid>
                 </Grid>
@@ -164,13 +172,19 @@ function App() {
                 value={value}
                 onChange={(e) => handleVariableChange(name, e.target.value)}
                 variant="outlined"
+                InputLabelProps={{
+                    style: { color: textColor },
+                }}
+                InputProps={{
+                    style: { color: textColor },
+                }}
             />
         );
     };
 
     return (
-        <div>
-            <AppBar position="static">
+        <div style={{ backgroundColor: websiteBackground, color: textColor, minHeight: '100vh' }}>
+            <AppBar position="static" style={{ backgroundColor: menuBarBackground }}>
                 <Toolbar>
                     <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
                         <MenuIcon />
