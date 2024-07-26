@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AppBar, Toolbar, Button, Box, Typography, IconButton, TextField, Grid } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
+import debounce from 'lodash.debounce';
 
 function App() {
     const [fileContent, setFileContent] = useState('');
@@ -33,12 +34,15 @@ function App() {
     }, []);
 
     useEffect(() => {
-        // Update code based on state
+        updateCode();
+    }, [forwardSpeed, initialSpeed]);
+
+    const updateCode = useCallback(debounce(() => {
         const updatedCode = fileContent
             .replace(/SEARCH_SPEED = \d+/g, `SEARCH_SPEED = ${forwardSpeed}`)
             .replace(/FOUND_SPEED = \d+/g, `FOUND_SPEED = ${initialSpeed}`);
         setFileContent(updatedCode);
-    }, [forwardSpeed, initialSpeed]);
+    }, 300), [fileContent, forwardSpeed, initialSpeed]);
 
     const extractGlobalVariables = (code) => {
         const searchSpeedMatch = code.match(/SEARCH_SPEED\s*=\s*(\d+)/);
@@ -51,21 +55,29 @@ function App() {
     const openFile = async (event) => {
         const file = event.target.files[0];
         if (file) {
-            const content = await file.text();
-            setFileContent(content);
-            extractGlobalVariables(content); // Extract variables from the newly opened file
-            fileInputRef.current.value = '';  // Reset the input
+            try {
+                const content = await file.text();
+                setFileContent(content);
+                extractGlobalVariables(content); // Extract variables from the newly opened file
+                fileInputRef.current.value = '';  // Reset the input
+            } catch (error) {
+                console.error('Error reading file:', error);
+            }
         }
     };
 
     const saveFile = () => {
-        const blob = new Blob([fileContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'file.ino';
-        a.click();
-        URL.revokeObjectURL(url);
+        try {
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'file.ino';
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error saving file:', error);
+        }
     };
 
     return (
@@ -115,9 +127,20 @@ function App() {
                         value={fileContent}
                         onChange={(value) => setFileContent(value)}
                         theme="custom-dark"
+                        options={{
+                            lineNumbers: 'on',
+                            minimap: { enabled: false },
+                            wordWrap: 'on',
+                        }}
                     />
                 </Box>
             </Box>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={openFile}
+                style={{ display: 'none' }}
+            />
         </div>
     );
 }
