@@ -7,38 +7,42 @@ import Gauge from './Gauge';
 import AirplaneToggle from './AirplaneToggle';
 
 const codeEditorBackground = '#201E43';
-const menuBarBackground = '#201E43'; // Red
-const websiteBackground = '#F5F5F5'; // Very Light Gray
-const textColor = '#212121'; // Very Dark Gray
-const accentColor = '#FFEB3B'; // Yellow
-const highlightColor = '#E91E63'; // Pink
+const menuBarBackground = '#201E43';
+const websiteBackground = '#F5F5F5';
+const textColor = '#212121';
 
-function App() {
+const fetchDefaultCode = async (setFileContent, extractGlobalVariables) => {
+    try {
+        const response = await fetch('/defaultCode.ino');
+        const data = await response.text();
+        setFileContent(data);
+        extractGlobalVariables(data);
+    } catch (error) {
+        console.error('Error fetching default code:', error);
+    }
+};
+
+const defineCustomTheme = async () => {
+    const monaco = await loader.init();
+    monaco.editor.defineTheme('custom-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [],
+        colors: {
+            'editor.background': codeEditorBackground,
+        }
+    });
+    monaco.editor.setTheme('custom-dark');
+};
+
+const App = () => {
     const [fileContent, setFileContent] = useState('');
     const [globalVariables, setGlobalVariables] = useState({});
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        loader.init().then(monaco => {
-            monaco.editor.defineTheme('custom-dark', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [],
-                colors: {
-                    'editor.background': codeEditorBackground,
-                }
-            });
-            monaco.editor.setTheme('custom-dark');
-        });
-
-        // Fetch the default code from the file
-        fetch('/defaultCode.ino')
-            .then(response => response.text())
-            .then(data => {
-                setFileContent(data);
-                extractGlobalVariables(data);
-            })
-            .catch(error => console.error('Error fetching default code:', error));
+        defineCustomTheme();
+        fetchDefaultCode(setFileContent, extractGlobalVariables);
     }, []);
 
     const extractGlobalVariables = (code) => {
@@ -79,21 +83,21 @@ function App() {
         }));
     };
 
-    const openFile = async (event) => {
+    const openFile = useCallback(async (event) => {
         const file = event.target.files[0];
         if (file) {
             try {
                 const content = await file.text();
                 setFileContent(content);
-                extractGlobalVariables(content); // Extract variables from the newly opened file
-                fileInputRef.current.value = '';  // Reset the input
+                extractGlobalVariables(content);
+                fileInputRef.current.value = '';  // Reset the input field
             } catch (error) {
                 console.error('Error reading file:', error);
             }
         }
-    };
+    }, []);
 
-    const saveFile = () => {
+    const saveFile = useCallback(() => {
         try {
             const blob = new Blob([fileContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -105,81 +109,17 @@ function App() {
         } catch (error) {
             console.error('Error saving file:', error);
         }
-    };
+    }, [fileContent]);
 
     const renderInputField = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
-            return (
-                <Grid container justifyContent="center" spacing={1} marginBottom={2}>
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth variant="outlined">
-                            <InputLabel style={{ color: textColor }}>{name}</InputLabel>
-                            <Select
-                                value={value}
-                                onChange={(e) => handleVariableChange(name, e.target.value)}
-                                label={name}
-                                style={{ color: textColor }}
-                            >
-                                <MenuItem value={0}>SearchAndDestroy</MenuItem>
-                                <MenuItem value={1}>AggressivePursuit</MenuItem>
-                                <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            );
+            return <StrategySelect name={name} value={value} onChange={handleVariableChange} />;
         } else if (value === 'true' || value === 'false') {
-            return (
-                <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
-                    <Grid item xs={12} md={6} textAlign="center">
-                        <Typography variant="h5" display="inline" marginRight={2} style={{ color: textColor }}>{name}</Typography>
-                        <AirplaneToggle
-                            checked={value === 'true'}
-                            onChange={(e) => handleVariableChange(name, e.target.checked ? 'true' : 'false')}
-                            name={name}
-                        />
-                    </Grid>
-                </Grid>
-            );
+            return <BooleanToggle name={name} value={value} onChange={handleVariableChange} />;
         } else if (!isNaN(value)) {
-            return (
-                <Grid container alignItems="center" spacing={1}>
-                    <Grid item xs={6}>
-                        <TextField
-                            label={name}
-                            type="number"
-                            fullWidth
-                            value={value}
-                            onChange={(e) => handleVariableChange(name, e.target.value)}
-                            variant="outlined"
-                        />
-                    </Grid>
-                    <Grid item xs={6}>
-                        <Gauge
-                            value={parseFloat(value)}
-                            max={250}
-                            name={name}
-                        />
-                    </Grid>
-                </Grid>
-            );
+            return <NumericInput name={name} value={value} onChange={handleVariableChange} />;
         }
-        return (
-            <TextField
-                label={name}
-                type="text"
-                fullWidth
-                value={value}
-                onChange={(e) => handleVariableChange(name, e.target.value)}
-                variant="outlined"
-                InputLabelProps={{
-                    style: { color: textColor },
-                }}
-                InputProps={{
-                    style: { color: textColor },
-                }}
-            />
-        );
+        return <TextInput name={name} value={value} onChange={handleVariableChange} />;
     };
 
     return (
@@ -241,6 +181,78 @@ function App() {
             />
         </div>
     );
-}
+};
+
+const StrategySelect = ({ name, value, onChange }) => (
+    <Grid container justifyContent="center" spacing={1} marginBottom={2}>
+        <Grid item xs={12} md={6}>
+            <FormControl fullWidth variant="outlined">
+                <InputLabel style={{ color: textColor }}>{name}</InputLabel>
+                <Select
+                    value={value}
+                    onChange={(e) => onChange(name, e.target.value)}
+                    label={name}
+                    style={{ color: textColor }}
+                >
+                    <MenuItem value={0}>SearchAndDestroy</MenuItem>
+                    <MenuItem value={1}>AggressivePursuit</MenuItem>
+                    <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
+                </Select>
+            </FormControl>
+        </Grid>
+    </Grid>
+);
+
+const BooleanToggle = ({ name, value, onChange }) => (
+    <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
+        <Grid item xs={12} md={6} textAlign="center">
+            <Typography variant="h5" display="inline" marginRight={2} style={{ color: textColor }}>{name}</Typography>
+            <AirplaneToggle
+                checked={value === 'true'}
+                onChange={(e) => onChange(name, e.target.checked ? 'true' : 'false')}
+                name={name}
+            />
+        </Grid>
+    </Grid>
+);
+
+const NumericInput = ({ name, value, onChange }) => (
+    <Grid container alignItems="center" spacing={1}>
+        <Grid item xs={6}>
+            <TextField
+                label={name}
+                type="number"
+                fullWidth
+                value={value}
+                onChange={(e) => onChange(name, e.target.value)}
+                variant="outlined"
+            />
+        </Grid>
+        <Grid item xs={6}>
+            <Gauge
+                value={parseFloat(value)}
+                max={250}
+                name={name}
+            />
+        </Grid>
+    </Grid>
+);
+
+const TextInput = ({ name, value, onChange }) => (
+    <TextField
+        label={name}
+        type="text"
+        fullWidth
+        value={value}
+        onChange={(e) => onChange(name, e.target.value)}
+        variant="outlined"
+        InputLabelProps={{
+            style: { color: textColor },
+        }}
+        InputProps={{
+            style: { color: textColor },
+        }}
+    />
+);
 
 export default App;
