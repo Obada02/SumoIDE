@@ -15,7 +15,14 @@ const Gauge = ({ value, max, name }) => {
      //    offset = -offset;
 
     if (name.match(/TIME/)) {
-        value = `${Math.floor(value / 1000)}:${value % 1000}`;
+        let seconds = Math.floor(value / 1000);
+        let millseconds = value % 1000;
+        let leadingZeros = '';
+
+        for (let i = 0; i < 3 - millseconds.toString().length; i++) {
+            leadingZeros += '0';
+        }
+        value = `${seconds}:${leadingZeros}${value % 1000}`;
     }
     return (
         <svg width="120" height="120" viewBox="0 0 120 120">
