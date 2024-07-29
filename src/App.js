@@ -77,6 +77,9 @@ const App = () => {
         updateCode();
     }, [globalVariables]);
 
+    useEffect(() => {
+        extractGlobalVariables(fileContent);
+    }, [fileContent]);
     const handleVariableChange = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             updateStrategy(value);
@@ -188,9 +191,6 @@ const App = () => {
         <div style={{ backgroundColor: websiteBackground, color: textColor, minHeight: '100vh' }}>
             <AppBar position="static" style={{ backgroundColor: menuBarBackground }}>
                 <Toolbar>
-                    <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
-                        <MenuIcon />
-                    </IconButton>
                     <IconButton color="inherit" onClick={() => fileInputRef.current.click()}>
                         <img src={uploadIcon} alt="Open File" style={{ width: 24, height: 24 }} />
                     </IconButton>
