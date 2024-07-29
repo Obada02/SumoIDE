@@ -1,4 +1,4 @@
-// src/AirplaneToggle.js
+// src/Toggle.js
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
@@ -45,8 +45,8 @@ const AirplaneSwitch = styled(Switch)(({ theme }) => ({
     },
 }));
 
-const AirplaneToggle = ({ checked, onChange, name }) => (
+const Toggle = ({ checked, onChange, name }) => (
     <AirplaneSwitch checked={checked} onChange={onChange} name={name} />
 );
 
-export default AirplaneToggle;
+export default Toggle;

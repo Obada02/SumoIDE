@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, Button, Box, Typography, IconButton, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Box, Typography, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 import debounce from 'lodash.debounce';
 import Gauge from './Gauge';
-import AirplaneToggle from './AirplaneToggle';
+import Toggle from './Toggle';
+
+import downloadIcon from './assets/downloads.png';
+import uploadIcon from './assets/upload.png';
 
 const codeEditorBackground = '#201E43';
 const menuBarBackground = '#201E43';
@@ -73,6 +76,10 @@ const App = () => {
         updateCode();
     }, [globalVariables]);
 
+    useEffect(() => {
+        extractGlobalVariables(fileContent);
+    }, [fileContent]);
+
     const handleVariableChange = (name, value) => {
         setGlobalVariables(prevState => ({
             ...prevState,
@@ -126,11 +133,12 @@ const App = () => {
         <div style={{ backgroundColor: websiteBackground, color: textColor, minHeight: '100vh' }}>
             <AppBar position="static" style={{ backgroundColor: menuBarBackground }}>
                 <Toolbar>
-                    <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
-                        <MenuIcon />
+                    <IconButton color="inherit" onClick={() => fileInputRef.current.click()}>
+                        <img src={uploadIcon} alt="Open File" style={{ width: 24, height: 24 }} />
                     </IconButton>
-                    <Button color="inherit" onClick={() => fileInputRef.current.click()}>Open File</Button>
-                    <Button color="inherit" onClick={saveFile}>Save File</Button>
+                    <IconButton color="inherit" onClick={saveFile}>
+                        <img src={downloadIcon} alt="Save File" style={{ width: 24, height: 24 }} />
+                    </IconButton>
                     <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
                         SumoIDE
                     </Typography>
@@ -207,7 +215,7 @@ const BooleanToggle = ({ name, value, onChange }) => (
     <Grid container justifyContent="center" alignItems="center" spacing={1} marginBottom={2}>
         <Grid item xs={12} md={6} textAlign="center">
             <Typography variant="h5" display="inline" marginRight={2} style={{ color: textColor }}>{name}</Typography>
-            <AirplaneToggle
+            <Toggle
                 checked={value === 'true'}
                 onChange={(e) => onChange(name, e.target.checked ? 'true' : 'false')}
                 name={name}
