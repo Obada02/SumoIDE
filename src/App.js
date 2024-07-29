@@ -80,6 +80,7 @@ const App = () => {
     const handleVariableChange = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             ensureStrategyExists(value);
+            updateLoopFunction(value);
         }
 
         setGlobalVariables(prevState => ({
@@ -148,6 +149,22 @@ const App = () => {
         }
 
         setFileContent(updatedCode);
+    };
+
+    const updateLoopFunction = (strategy) => {
+        const loopFunctionStart = fileContent.indexOf('void loop() {');
+        if (loopFunctionStart !== -1) {
+            const loopFunctionEnd = fileContent.indexOf('}', loopFunctionStart) + 1;
+            if (loopFunctionEnd !== -1) {
+                const loopFunction = fileContent.substring(loopFunctionStart, loopFunctionEnd);
+                const updatedLoopFunction = loopFunction.replace(
+                    /if \(!colorSensorError\) \{[\s\S]*?\}/,
+                    `if (!colorSensorError) {\n        ${strategy}();\n    }`
+                );
+                const updatedCode = fileContent.substring(0, loopFunctionStart) + updatedLoopFunction + fileContent.substring(loopFunctionEnd);
+                setFileContent(updatedCode);
+            }
+        }
     };
 
     const renderInputField = (name, value) => {

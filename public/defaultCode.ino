@@ -16,8 +16,6 @@ unsigned long startTime = 0;
 const int SEARCH_SPEED = 180; // Speed when searching for the opponent
 const int TURN_SPEED = 180; // Speed for turning and aggressive actions
 const int FOUND_SPEED = 250; // Speed when the opponent is detected and centered
-
-
 const int BACKWARD_TIME = 1000; // Time to move backward at the beginning
 const int TURN_LEFT_TIME = 800; // Time to turn left before starting SearchAndDestroy
 int currentStrategy = 0; // 0 = SearchAndDestroy, 1 = AggressivePursuit, 2 = InitialEvadeAndSearch
@@ -68,13 +66,7 @@ void setup() {
 void loop() {
     // Call the selected strategy
     if (!colorSensorError) {
-        if (currentStrategy == 0) {
-            SearchAndDestroy();
-        } else if (currentStrategy == 1) {
-            aggressivePursuit();
-        } else if (currentStrategy == 2) {
-            InitialEvadeAndSearch();
-        }
+        SearchAndDestroy(); // Default strategy
     } else {
         // Error handling logic
         while (true) {
