@@ -79,8 +79,7 @@ const App = () => {
 
     const handleVariableChange = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
-            ensureStrategyExists(value);
-            updateLoopFunction(value);
+            updateStrategy(value);
         }
 
         setGlobalVariables(prevState => ({
@@ -120,7 +119,23 @@ const App = () => {
         }
     }, [fileContent]);
 
-    const ensureDependenciesExist = (dependencies, code) => {
+    const updateLoopFunction = (code, strategy) => {
+        const loopFunctionStart = code.indexOf('void loop() {');
+        if (loopFunctionStart !== -1) {
+            const loopFunctionEnd = code.indexOf('}', loopFunctionStart) + 1;
+            if (loopFunctionEnd !== -1) {
+                const loopFunction = code.substring(loopFunctionStart, loopFunctionEnd);
+                const updatedLoopFunction = loopFunction.replace(
+                    /if \(!colorSensorError\) \{[\s\S]*?\}/,
+                    `if (!colorSensorError) {\n        ${strategy}();\n    }`
+                );
+                return code.substring(0, loopFunctionStart) + updatedLoopFunction + code.substring(loopFunctionEnd);
+            }
+        }
+        return code;
+    };
+
+    const ensureDependenciesExist = (code, dependencies) => {
         let updatedCode = code;
         dependencies.forEach(dep => {
             if (!updatedCode.includes(dep)) {
@@ -130,7 +145,7 @@ const App = () => {
         return updatedCode;
     };
 
-    const ensureStrategyExists = (strategy) => {
+    const updateStrategy = (strategy) => {
         let updatedCode = fileContent;
         const strategyDetails = strategies[strategy];
 
@@ -141,30 +156,21 @@ const App = () => {
 
         const { prototype, implementation, dependencies } = strategyDetails;
 
-        updatedCode = ensureDependenciesExist(dependencies, updatedCode);
+        updatedCode = ensureDependenciesExist(updatedCode, dependencies);
 
         if (!updatedCode.includes(prototype)) {
             updatedCode = updatedCode.replace('// Function prototypes', `// Function prototypes\n${prototype}`);
             updatedCode += `\n${implementation.trim()}\n`;
         }
 
-        setFileContent(updatedCode);
-    };
-
-    const updateLoopFunction = (strategy) => {
-        const loopFunctionStart = fileContent.indexOf('void loop() {');
-        if (loopFunctionStart !== -1) {
-            const loopFunctionEnd = fileContent.indexOf('}', loopFunctionStart) + 1;
-            if (loopFunctionEnd !== -1) {
-                const loopFunction = fileContent.substring(loopFunctionStart, loopFunctionEnd);
-                const updatedLoopFunction = loopFunction.replace(
-                    /if \(!colorSensorError\) \{[\s\S]*?\}/,
-                    `if (!colorSensorError) {\n        ${strategy}();\n    }`
-                );
-                const updatedCode = fileContent.substring(0, loopFunctionStart) + updatedLoopFunction + fileContent.substring(loopFunctionEnd);
-                setFileContent(updatedCode);
-            }
+        const currentStrategyLine = updatedCode.match(/String currentStrategy = "[^"]+";/);
+        if (currentStrategyLine) {
+            updatedCode = updatedCode.replace(currentStrategyLine[0], `String currentStrategy = "${strategy}";`);
         }
+
+        updatedCode = updateLoopFunction(updatedCode, strategy);
+
+        setFileContent(updatedCode);
     };
 
     const renderInputField = (name, value) => {

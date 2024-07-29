@@ -18,7 +18,7 @@ const int TURN_SPEED = 180; // Speed for turning and aggressive actions
 const int FOUND_SPEED = 250; // Speed when the opponent is detected and centered
 const int BACKWARD_TIME = 1000; // Time to move backward at the beginning
 const int TURN_LEFT_TIME = 800; // Time to turn left before starting SearchAndDestroy
-int currentStrategy = 0; // 0 = SearchAndDestroy, 1 = AggressivePursuit, 2 = InitialEvadeAndSearch
+String currentStrategy = "SearchAndDestroy"; // Default strategy
 
 // Function prototypes
 void turnLeft(int speed);
@@ -26,8 +26,6 @@ void turnRight(int speed);
 void moveForward(int speed);
 void moveBackward(int speed);
 void SearchAndDestroy();
-void aggressivePursuit();
-void InitialEvadeAndSearch();
 
 void setup() {
     // Initialize pins
@@ -66,7 +64,7 @@ void setup() {
 void loop() {
     // Call the selected strategy
     if (!colorSensorError) {
-        SearchAndDestroy(); // Default strategy
+        SearchAndDestroy();
     } else {
         // Error handling logic
         while (true) {
@@ -122,38 +120,6 @@ void SearchAndDestroy() {
         turnRight(FOUND_SPEED);
         delay(800);
     }
-}
-
-// Define Aggressive Pursuit strategy
-void aggressivePursuit() {
-    // Main navigation logic for aggressive pursuit
-    while (true) {
-        if (digitalRead(MIR_SENSOR) == HIGH && digitalRead(L_IR_SENSOR) == HIGH && digitalRead(R_IR_SENSOR) == HIGH) {
-            turnRight(TURN_SPEED);
-        } else if (digitalRead(MIR_SENSOR) == LOW || (digitalRead(R_IR_SENSOR) == LOW && digitalRead(L_IR_SENSOR) == LOW)) {
-            moveForward(FOUND_SPEED);
-        } else if (digitalRead(L_IR_SENSOR) == LOW && digitalRead(R_IR_SENSOR) == HIGH) {
-            if (digitalRead(MIR_SENSOR) == LOW || digitalRead(L_COLOR_SENSOR) == LOW || digitalRead(R_COLOR_SENSOR) == LOW) { break; }
-            turnRight(FOUND_SPEED);
-        } else if (digitalRead(R_IR_SENSOR) == LOW && digitalRead(L_IR_SENSOR) == HIGH) {
-            if (digitalRead(MIR_SENSOR) == LOW) { break; }
-            turnLeft(FOUND_SPEED);
-        }
-    }
-}
-
-// Define InitialEvadeAndSearch strategy
-void InitialEvadeAndSearch() {
-    // Move backward for the specified time
-    moveBackward(SEARCH_SPEED);
-    delay(BACKWARD_TIME);
-
-    // Turn left for the specified delay
-    turnLeft(SEARCH_SPEED);
-    delay(TURN_LEFT_TIME);
-
-    // Continue with SearchAndDestroy strategy
-    SearchAndDestroy();
 }
 
 // Function definitions

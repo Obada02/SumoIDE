@@ -1,10 +1,7 @@
-// src/strategies.js
-
 export const strategies = {
     SearchAndDestroy: {
         prototype: 'void SearchAndDestroy();',
-        implementation: `
-void SearchAndDestroy() {
+        implementation: `void SearchAndDestroy() {
     // Main navigation logic for search and destroy
     while (digitalRead(L_COLOR_SENSOR) == HIGH && digitalRead(R_COLOR_SENSOR) == HIGH) {
         if (digitalRead(MIR_SENSOR) == LOW && digitalRead(L_IR_SENSOR) == HIGH && digitalRead(R_IR_SENSOR) == HIGH) {
@@ -40,14 +37,17 @@ void SearchAndDestroy() {
         turnRight(FOUND_SPEED);
         delay(800);
     }
-}
-`,
-        dependencies: ['void moveForward(int speed);', 'void moveBackward(int speed);', 'void turnRight(int speed);', 'void turnLeft(int speed);']
+}`,
+        dependencies: [
+            'void moveForward(int speed);',
+            'void moveBackward(int speed);',
+            'void turnLeft(int speed);',
+            'void turnRight(int speed);'
+        ]
     },
     aggressivePursuit: {
         prototype: 'void aggressivePursuit();',
-        implementation: `
-void aggressivePursuit() {
+        implementation: `void aggressivePursuit() {
     // Main navigation logic for aggressive pursuit
     while (true) {
         if (digitalRead(MIR_SENSOR) == HIGH && digitalRead(L_IR_SENSOR) == HIGH && digitalRead(R_IR_SENSOR) == HIGH) {
@@ -62,14 +62,16 @@ void aggressivePursuit() {
             turnLeft(FOUND_SPEED);
         }
     }
-}
-`,
-        dependencies: ['void moveForward(int speed);', 'void turnRight(int speed);', 'void turnLeft(int speed);']
+}`,
+        dependencies: [
+            'void moveForward(int speed);',
+            'void turnRight(int speed);',
+            'void turnLeft(int speed);'
+        ]
     },
     InitialEvadeAndSearch: {
         prototype: 'void InitialEvadeAndSearch();',
-        implementation: `
-void InitialEvadeAndSearch() {
+        implementation: `void InitialEvadeAndSearch() {
     // Move backward for the specified time
     moveBackward(SEARCH_SPEED);
     delay(BACKWARD_TIME);
@@ -80,8 +82,11 @@ void InitialEvadeAndSearch() {
 
     // Continue with SearchAndDestroy strategy
     SearchAndDestroy();
-}
-`,
-        dependencies: ['void moveBackward(int speed);', 'void turnLeft(int speed);', 'void SearchAndDestroy();']
+}`,
+        dependencies: [
+            'void moveBackward(int speed);',
+            'void turnLeft(int speed);',
+            'void SearchAndDestroy();'
+        ]
     }
 };
