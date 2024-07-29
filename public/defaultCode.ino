@@ -27,9 +27,9 @@ void turnLeft(int speed);
 void turnRight(int speed);
 void moveForward(int speed);
 void moveBackward(int speed);
-void SearchAndDestroy(); // Strategy for search and destroy
-void aggressivePursuit(); // Strategy for aggressive pursuit
-void InitialEvadeAndSearch(); // New strategy for initial evade and search
+void SearchAndDestroy();
+void aggressivePursuit();
+void InitialEvadeAndSearch();
 
 void setup() {
     // Initialize pins

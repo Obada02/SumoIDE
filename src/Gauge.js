@@ -16,10 +16,10 @@ const Gauge = ({ value, max, name }) => {
 
     if (name.match(/TIME/)) {
         let seconds = Math.floor(value / 1000);
-        let millseconds = value % 1000;
+        let milliseconds = value % 1000;
         let leadingZeros = '';
 
-        for (let i = 0; i < 3 - millseconds.toString().length; i++) {
+        for (let i = 0; i < 3 - milliseconds.toString().length; i++) {
             leadingZeros += '0';
         }
         value = `${seconds}:${leadingZeros}${value % 1000}`;

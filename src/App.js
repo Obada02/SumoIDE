@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AppBar, Toolbar, IconButton, Box, Typography, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Typography, IconButton, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 import debounce from 'lodash.debounce';
 import Gauge from './Gauge';
 import Toggle from './Toggle';
+import { strategies } from './strategies';
 
 import downloadIcon from './assets/downloads.png';
 import uploadIcon from './assets/upload.png';
@@ -76,11 +77,11 @@ const App = () => {
         updateCode();
     }, [globalVariables]);
 
-    useEffect(() => {
-        extractGlobalVariables(fileContent);
-    }, [fileContent]);
-
     const handleVariableChange = (name, value) => {
+        if (name.toLowerCase().includes('strategy')) {
+            ensureStrategyExists(value);
+        }
+
         setGlobalVariables(prevState => ({
             ...prevState,
             [name]: {
@@ -118,6 +119,37 @@ const App = () => {
         }
     }, [fileContent]);
 
+    const ensureDependenciesExist = (dependencies, code) => {
+        let updatedCode = code;
+        dependencies.forEach(dep => {
+            if (!updatedCode.includes(dep)) {
+                updatedCode = updatedCode.replace('// Function prototypes', `${dep}\n// Function prototypes`);
+            }
+        });
+        return updatedCode;
+    };
+
+    const ensureStrategyExists = (strategy) => {
+        let updatedCode = fileContent;
+        const strategyDetails = strategies[strategy];
+
+        if (!strategyDetails) {
+            console.error(`Strategy "${strategy}" not found in strategies object`);
+            return;
+        }
+
+        const { prototype, implementation, dependencies } = strategyDetails;
+
+        updatedCode = ensureDependenciesExist(dependencies, updatedCode);
+
+        if (!updatedCode.includes(prototype)) {
+            updatedCode = updatedCode.replace('// Function prototypes', `// Function prototypes\n${prototype}`);
+            updatedCode += `\n${implementation.trim()}\n`;
+        }
+
+        setFileContent(updatedCode);
+    };
+
     const renderInputField = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             return <StrategySelect name={name} value={value} onChange={handleVariableChange} />;
@@ -133,6 +165,9 @@ const App = () => {
         <div style={{ backgroundColor: websiteBackground, color: textColor, minHeight: '100vh' }}>
             <AppBar position="static" style={{ backgroundColor: menuBarBackground }}>
                 <Toolbar>
+                    <IconButton edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+                        <MenuIcon />
+                    </IconButton>
                     <IconButton color="inherit" onClick={() => fileInputRef.current.click()}>
                         <img src={uploadIcon} alt="Open File" style={{ width: 24, height: 24 }} />
                     </IconButton>
@@ -202,9 +237,9 @@ const StrategySelect = ({ name, value, onChange }) => (
                     label={name}
                     style={{ color: textColor }}
                 >
-                    <MenuItem value={0}>SearchAndDestroy</MenuItem>
-                    <MenuItem value={1}>AggressivePursuit</MenuItem>
-                    <MenuItem value={2}>InitialEvadeAndSearch</MenuItem>
+                    <MenuItem value="SearchAndDestroy">SearchAndDestroy</MenuItem>
+                    <MenuItem value="aggressivePursuit">AggressivePursuit</MenuItem>
+                    <MenuItem value="InitialEvadeAndSearch">InitialEvadeAndSearch</MenuItem>
                 </Select>
             </FormControl>
         </Grid>
