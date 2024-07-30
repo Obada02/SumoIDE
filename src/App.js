@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AppBar, Toolbar, Button, Box, Typography, IconButton, Grid, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MonacoEditor, { loader } from '@monaco-editor/react';
-import debounce from 'lodash.debounce';
 import Gauge from './Gauge';
 import Toggle from './Toggle';
 import { strategies } from './strategies';
@@ -64,14 +63,14 @@ const App = () => {
         }
     };
 
-    const updateCode = useCallback(debounce(() => {
+    const updateCode = () => {
         let updatedCode = fileContent;
         for (const [name, { value, originalValue }] of Object.entries(globalVariables)) {
             const regex = new RegExp(`(${name}\\s*=\\s*)${originalValue}`, 'g');
             updatedCode = updatedCode.replace(regex, `$1${value}`);
         }
         setFileContent(updatedCode);
-    }, 300), [fileContent, globalVariables]);
+    };
 
     useEffect(() => {
         updateCode();
@@ -80,11 +79,11 @@ const App = () => {
     useEffect(() => {
         extractGlobalVariables(fileContent);
     }, [fileContent]);
+
     const handleVariableChange = (name, value) => {
         if (name.toLowerCase().includes('strategy')) {
             updateStrategy(value);
         }
-
         setGlobalVariables(prevState => ({
             ...prevState,
             [name]: {
@@ -94,7 +93,7 @@ const App = () => {
         }));
     };
 
-    const openFile = useCallback(async (event) => {
+    const openFile = async (event) => {
         const file = event.target.files[0];
         if (file) {
             try {
@@ -106,9 +105,9 @@ const App = () => {
                 console.error('Error reading file:', error);
             }
         }
-    }, []);
+    };
 
-    const saveFile = useCallback(() => {
+    const saveFile = () => {
         try {
             const blob = new Blob([fileContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -120,7 +119,7 @@ const App = () => {
         } catch (error) {
             console.error('Error saving file:', error);
         }
-    }, [fileContent]);
+    };
 
     const updateLoopFunction = (code, strategy) => {
         const loopFunctionStart = code.indexOf('void loop() {');
@@ -166,14 +165,18 @@ const App = () => {
             updatedCode += `\n${implementation.trim()}\n`;
         }
 
-        const currentStrategyLine = updatedCode.match(/String currentStrategy = "[^"]+";/);
-        if (currentStrategyLine) {
-            updatedCode = updatedCode.replace(currentStrategyLine[0], `String currentStrategy = "${strategy}";`);
-        }
-
         updatedCode = updateLoopFunction(updatedCode, strategy);
 
         setFileContent(updatedCode);
+
+        // Directly update the globalVariables for the strategy
+        setGlobalVariables(prevState => ({
+            ...prevState,
+            currentStrategy: {
+                ...prevState.currentStrategy,
+                value: `"${strategy}"`,
+            },
+        }));
     };
 
     const renderInputField = (name, value) => {
@@ -255,7 +258,7 @@ const StrategySelect = ({ name, value, onChange }) => (
             <FormControl fullWidth variant="outlined">
                 <InputLabel style={{ color: textColor }}>{name}</InputLabel>
                 <Select
-                    value={value}
+                    value={value.replace(/"/g, '')} // Remove the quotes for display
                     onChange={(e) => onChange(name, e.target.value)}
                     label={name}
                     style={{ color: textColor }}
